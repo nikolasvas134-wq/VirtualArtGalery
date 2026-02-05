@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Game Dev Console Portfolio</title>
+
+  <!-- Pixel font -->
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: #000;
+      color: #ffffff;
+      font-family: 'Press Start 2P', monospace;
+      font-size: 12px;
+      line-height: 1.6;
+      padding: 20px;
+    }
+
+    /* ===== VIDEO BACKGROUND ===== */
+    .bg-video {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      z-index: -2;
+      filter: brightness(0.25) contrast(1.1);
+    }
+
+    .console {
+      max-width: 1000px;
+      margin: 0 auto;
+      border: 2px solid #ffffff;
+      padding: 20px;
+      background: rgba(0, 0, 0, 0.65);
+      box-shadow: 0 0 20px rgba(255,255,255,0.25);
+    }
+
+    .banner {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    .banner pre {
+      color: #ffffff;
+      font-size: 10px;
+      white-space: pre-wrap;
+    }
+
+    .line {
+      margin-bottom: 14px;
+      white-space: pre-wrap;
+    }
+
+    .cursor::after {
+      content: "_";
+      animation: blink 1s infinite;
+    }
+
+    @keyframes blink {
+      0%, 50% { opacity: 1; }
+      51%, 100% { opacity: 0; }
+    }
+
+    .project {
+      margin-top: 40px;
+      border-top: 1px dashed #ffffff;
+      padding-top: 20px;
+    }
+
+    .project h2 {
+      font-size: 12px;
+      margin-bottom: 10px;
+    }
+
+    .project p {
+      margin-bottom: 10px;
+    }
+
+    .project-images {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .project-images img {
+      width: 100%;
+      border: 2px solid #ffffff;
+      image-rendering: pixelated;
+      cursor: pointer;
+    }
+
+    .prompt {
+      color: #e0e0e0;
+    }
+
+    a {
+      color: #ffffff;
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    /* ===== IMAGE VIEWER ===== */
+    .image-viewer {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.95);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      cursor: pointer;
+    }
+
+    .image-viewer img {
+      max-width: 90%;
+      max-height: 90%;
+      border: 3px solid #ffffff;
+      image-rendering: pixelated;
+      box-shadow: 0 0 30px rgba(255,255,255,0.35);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- VIDEO BACKGROUND -->
+  <video class="bg-video" autoplay muted loop playsinline>
+    <source src="0205(1).mp4" type="video/mp4">
+  </video>
+
+  <div class="console" id="console">
+
+    <div class="banner">
+      <pre>
+███╗   ██╗ ██████╗ ██╗      █████╗ ███████╗██████╗ ███████╗██╗   ██╗
+████╗  ██║██╔═══██╗██║     ██╔══██╗██╔════╝██╔══██╗██╔════╝██║   ██║
+██╔██╗ ██║██║   ██║██║     ███████║███████╗██║  ██║█████╗  ██║   ██║
+██║╚██╗██║██║   ██║██║     ██╔══██║╚════██║██║  ██║██╔══╝  ╚██╗ ██╔╝
+██║ ╚████║╚██████╔╝███████╗██║  ██║███████║██████╔╝███████╗ ╚████╔╝ 
+╚═╝  ╚═══╝ ╚═════╝ ╚══════╝╚═╝  ╚═╝╚══════╝╚═════╝ ╚══════╝  ╚═══╝  
+                         N O L A S D E V
+</pre>
+    </div>
+
+    <div id="output"></div>
+
+  </div>
+
+  <!-- IMAGE VIEWER -->
+  <div class="image-viewer" id="imageViewer">
+    <img id="viewerImage" src="" alt="">
+  </div>
+
+  <script>
+    const output = document.getElementById('output');
+
+    const lines = [
+      "> booting portfolio.exe",
+      "> loading developer profile...",
+      "",
+      "NAME: NolasDev",
+      "ROLE: Game Developer",
+      "FOCUS: Story, Horror, Experimenting, Visuals ",
+      "ENGINE: Unreal Engine 5",
+      "",
+      "ABOUT_ME:",
+      "Hello Im Nolas and I am a game developer focused on immersive experiences,",
+      "with intresting visuals , and stories",
+      "This portfolio will behave as my virtual art galery desplaying my projects",
+      "Anything from old prototypes, behind the scenes, concept art and even finished projects ",
+      "will apear here:",
+      "> loading projects...",
+      ""
+    ];
+
+    let lineIndex = 0;
+    let charIndex = 0;
+    let currentLineEl = null;
+
+    function typeNextChar() {
+      if (lineIndex >= lines.length) {
+        loadProjects();
+        return;
+      }
+
+      if (!currentLineEl) {
+        currentLineEl = document.createElement('div');
+        currentLineEl.className = 'line cursor';
+        output.appendChild(currentLineEl);
+      }
+
+      const line = lines[lineIndex];
+
+      if (charIndex < line.length) {
+        currentLineEl.textContent += line.charAt(charIndex);
+        charIndex++;
+        setTimeout(typeNextChar, 30);
+      } else {
+        currentLineEl.classList.remove('cursor');
+        currentLineEl = null;
+        charIndex = 0;
+        lineIndex++;
+        setTimeout(typeNextChar, 300);
+      }
+    }
+
+    function loadProjects() {
+      const projects = [
+        {
+          title: "PROJECT: Clockwork Visitant",
+          description: "Thomas Leewood should’ve died in World War I. But fate kept him breathing, and something ancient took notice. Step into his nightmares. Uncover the legend. Find out what really came for Thomas Leewood…",
+          images: [
+            "imageyyy.png",
+            "hfddd.png",
+            "Screenshot 2026-02-04 220604.png",
+            "Screenshot 2026-02-04 220420.png",
+            "wzvex6.png"
+          ]
+        },
+        {
+          title: "PROJECT: Custom Gravity Prototype",
+          description: "Third-person system allowing full surface traversal without gravity volumes.",
+          images: [
+            "images/gravity1.png",
+            "images/gravity2.png"
+          ]
+        },
+        {
+          title: "PROJECT: [EMPTY SLOT 01]",
+          description: "",
+          images: []
+        },
+        {
+          title: "PROJECT: [EMPTY SLOT 02]",
+          description: "",
+          images: []
+        },
+        {
+          title: "PROJECT: [EMPTY SLOT 03]",
+          description: "",
+          images: []
+        },
+        {
+          title: "PROJECT: [EMPTY SLOT 04]",
+          description: "",
+          images: []
+        }
+      ];
+
+      projects.forEach(project => {
+        const projectEl = document.createElement('div');
+        projectEl.className = 'project';
+
+        projectEl.innerHTML = `
+          <h2>${project.title}</h2>
+          <p>${project.description}</p>
+          <div class="project-images">
+            ${project.images.map(img => `<img src="${img}" alt="${project.title}">`).join('')}
+          </div>
+        `;
+
+        output.appendChild(projectEl);
+      });
+
+      enableImageViewer();
+
+      const endLine = document.createElement('div');
+      endLine.className = 'line prompt';
+      endLine.textContent = "> awaiting input_";
+      output.appendChild(endLine);
+    }
+
+    const viewer = document.getElementById('imageViewer');
+    const viewerImg = document.getElementById('viewerImage');
+
+    function enableImageViewer() {
+      document.querySelectorAll('.project-images img').forEach(img => {
+        img.addEventListener('click', () => {
+          viewerImg.src = img.src;
+          viewer.style.display = 'flex';
+        });
+      });
+    }
+
+    viewer.addEventListener('click', () => {
+      viewer.style.display = 'none';
+      viewerImg.src = '';
+    });
+
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape') {
+        viewer.style.display = 'none';
+        viewerImg.src = '';
+      }
+    });
+
+    typeNextChar();
+  </script>
+
+</body>
+</html>
+
